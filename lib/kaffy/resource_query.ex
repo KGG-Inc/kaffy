@@ -64,9 +64,10 @@ defmodule Kaffy.ResourceQuery do
 
   def fetch_list(resource, ids) do
     schema = resource[:schema]
+    args = resource[:args] || []
 
     from(s in schema, where: s.id in ^ids)
-    |> Kaffy.Utils.repo().all()
+    |> Kaffy.Utils.repo().all(args)
   end
 
   def total_count(schema, do_cache, query, opts \\ [])
