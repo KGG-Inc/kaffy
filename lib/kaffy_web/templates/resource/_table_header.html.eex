@@ -7,7 +7,7 @@
     </th>
     <%= for field <- @fields do %>
         <% field_name = Kaffy.ResourceSchema.kaffy_field_name(@my_resource[:schema], field) |> String.upcase() %>
-        <% [{order_way, order_field}] = Kaffy.ResourceQuery.get_ordering(@my_resource, @params) %>
+        <% [{order_way, order_field} | _] = Kaffy.ResourceQuery.get_ordering(@my_resource, @params) %>
 
         <th>
             <%= if order_field == elem(field, 0) do %>

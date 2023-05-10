@@ -409,6 +409,16 @@ defmodule Kaffy.ResourceAdmin do
     )
   end
 
+  def custom_global_filter(conn, resource, query) do
+    Utils.get_assigned_value_or_default(
+      resource,
+      :custom_global_filter,
+      query,
+      [conn, resource[:schema], query],
+      false
+    )
+  end
+
   def custom_show_query(conn, resource, query) do
     Utils.get_assigned_value_or_default(
       resource,

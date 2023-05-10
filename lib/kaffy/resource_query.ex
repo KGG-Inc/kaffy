@@ -25,6 +25,10 @@ defmodule Kaffy.ResourceQuery do
         current_offset
       )
 
+    all = Kaffy.ResourceAdmin.custom_global_filter(conn, resource, all)
+    paged = Kaffy.ResourceAdmin.custom_global_filter(conn, resource, paged)
+
+
     {current_page, opts} =
       case Kaffy.ResourceAdmin.custom_index_query(conn, resource, paged) do
         {custom_query, opts} ->
@@ -35,7 +39,9 @@ defmodule Kaffy.ResourceQuery do
       end
 
     do_cache = if search == "" and Enum.empty?(filtered_fields), do: true, else: false
+    opts = Keyword.put(opts, :cache_key, resource[:cache_key])
     all_count = cached_total_count(schema, do_cache, all, opts)
+    IO.inspect([schema, all_count, all, paged])
     {all_count, current_page}
   end
 
@@ -77,7 +83,8 @@ defmodule Kaffy.ResourceQuery do
       |> Kaffy.Utils.repo().one(opts)
 
     if do_cache and result > 100_000 do
-      Kaffy.Cache.Client.add_cache(schema, "count", result, 600)
+      cache_key = opts[:cache_key] || schema
+      Kaffy.Cache.Client.add_cache(cache_key, "count", result, 600)
     end
 
     result
@@ -88,7 +95,8 @@ defmodule Kaffy.ResourceQuery do
   def cached_total_count(schema, false, query, opts), do: total_count(schema, false, query, opts)
 
   def cached_total_count(schema, do_cache, query, opts) do
-    Kaffy.Cache.Client.get_cache(schema, "count") || total_count(schema, do_cache, query, opts)
+    cache_key = opts[:cache_key] || schema
+    Kaffy.Cache.Client.get_cache(cache_key, "count") || total_count(schema, do_cache, query, opts)
   end
 
   defp get_filter_fields(params, resource) do
