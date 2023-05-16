@@ -41,7 +41,6 @@ defmodule Kaffy.ResourceQuery do
     do_cache = if search == "" and Enum.empty?(filtered_fields), do: true, else: false
     opts = Keyword.put(opts, :cache_key, resource[:cache_key])
     all_count = cached_total_count(schema, do_cache, all, opts)
-    IO.inspect([schema, all_count, all, paged])
     {all_count, current_page}
   end
 
