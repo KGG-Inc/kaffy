@@ -215,8 +215,9 @@ defmodule Kaffy.Utils do
   """
   @spec get_resource(Plug.Conn.t(), String.t(), String.t()) :: list()
   def get_resource(conn, context, resource) do
+    preloaded_resources = full_resources(conn)
     {context, resource} = convert_to_atoms(context, resource)
-    get_in(full_resources(conn), [context, :resources, resource])
+    get_in(preloaded_resources, [context, :resources, resource])
   end
 
   @doc """
@@ -232,8 +233,9 @@ defmodule Kaffy.Utils do
   """
   @spec schemas_for_context(Plug.Conn.t(), list()) :: list()
   def schemas_for_context(conn, context) do
+    preloaded_resources = full_resources(conn)
     context = convert_to_atom(context)
-    get_in(full_resources(conn), [context, :resources])
+    get_in(preloaded_resources, [context, :resources])
   end
 
   # @doc """
@@ -330,25 +332,30 @@ defmodule Kaffy.Utils do
   end
 
   def extensions(conn) do
-    exts = env(:extensions, [])
+    env(:extensions, [])
+    |> Enum.reduce(
+      %{stylesheets: [], javascripts: []},
+      fn ext, acc ->
+        Code.ensure_loaded(ext)
+        stylesheets =
+          if function_exported?(ext, :stylesheets, 1) do
+            ext.stylesheets(conn)
+          else
+            []
+          end
 
-    stylesheets =
-      Enum.map(exts, fn ext ->
-        case function_exported?(ext, :stylesheets, 1) do
-          true -> ext.stylesheets(conn)
-          false -> []
-        end
+        javascripts =
+          if function_exported?(ext, :javascripts, 1) do
+            ext.javascripts(conn)
+          else
+            []
+          end
+
+        %{
+          stylesheets: stylesheets ++ acc.stylesheets,
+          javascripts: javascripts ++ acc.javascripts
+        }
       end)
-
-    javascripts =
-      Enum.map(exts, fn ext ->
-        case function_exported?(ext, :javascripts, 1) do
-          true -> ext.javascripts(conn)
-          false -> []
-        end
-      end)
-
-    %{stylesheets: stylesheets, javascripts: javascripts}
   end
 
   defp env(key, default \\ nil) do
@@ -425,5 +432,9 @@ defmodule Kaffy.Utils do
 
   def get_task_modules() do
     env(:scheduled_tasks, [])
+  end
+
+  def visible?(options) do
+    Keyword.get(options, :in_menu, true)
   end
 end

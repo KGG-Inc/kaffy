@@ -1,6 +1,6 @@
 defmodule Kaffy.Routes do
   @moduledoc """
-  Kaffy.Routes must be "used" in your phoenix routes:
+  Kaffy.Routes must be "used" in your Phoenix routes:
 
   ```elixir
   use Kaffy.Routes, scope: "/admin", pipe_through: [:browser, :authenticate]
@@ -25,6 +25,7 @@ defmodule Kaffy.Routes do
         plug(:fetch_flash)
         plug(:protect_from_forgery)
         plug(:put_secure_browser_headers)
+        plug(:put_root_layout, {KaffyWeb.LayoutView, :root})
       end
 
       scope unquote(scoped), KaffyWeb do
