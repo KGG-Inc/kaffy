@@ -203,21 +203,21 @@ defmodule KaffyWeb.ResourceController do
     my_resource = Kaffy.Utils.get_resource(conn, context, resource)
     resource_name = Kaffy.ResourceAdmin.singular_name(my_resource)
 
-    with {:permitted, true} <- {:permitted, can_proceed?(my_resource, conn)},
-         {:enabled, true} <- {:enabled, is_enabled?(my_resource, :new)} do
-      changeset = Kaffy.ResourceAdmin.create_changeset(my_resource, %{}) |> Map.put(:errors, [])
+    case can_proceed?(my_resource, conn) do
+      false ->
+        unauthorized_access(conn)
 
-      render(conn, "new.html",
-        layout: {KaffyWeb.LayoutView, "app.html"},
-        changeset: changeset,
-        context: context,
-        resource: resource,
-        resource_name: resource_name,
-        my_resource: my_resource
-      )
-    else
-      {:permitted, false} -> unauthorized_access(conn)
-      {:enabled, false} -> not_enabled(conn)
+      true ->
+        changeset = Kaffy.ResourceAdmin.create_changeset(my_resource, %{}) |> Map.put(:errors, [])
+
+        render(conn, "new.html",
+          layout: {KaffyWeb.LayoutView, "app.html"},
+          changeset: changeset,
+          context: context,
+          resource: resource,
+          resource_name: resource_name,
+          my_resource: my_resource
+        )
     end
   end
 
@@ -227,56 +227,56 @@ defmodule KaffyWeb.ResourceController do
     changes = Map.get(params, resource, %{})
     resource_name = Kaffy.ResourceAdmin.singular_name(my_resource)
 
-    with {:permitted, true} <- {:permitted, can_proceed?(my_resource, conn)},
-         {:enabled, true} <- {:enabled, is_enabled?(my_resource, :new)} do
-      case Kaffy.ResourceCallbacks.create_callbacks(conn, my_resource, changes) do
-        {:ok, entry} ->
-          case Map.get(params, "submit", "Save") do
-            "Save" ->
-              put_flash(conn, :success, "Created a new #{resource_name} successfully")
-              |> redirect(
-                to: Kaffy.Utils.router().kaffy_resource_path(conn, :index, context, resource)
-              )
+    case can_proceed?(my_resource, conn) do
+      false ->
+        unauthorized_access(conn)
 
-            "Save and add another" ->
-              conn
-              |> put_flash(:success, "#{resource_name} saved successfully")
-              |> redirect(
-                to: Kaffy.Utils.router().kaffy_resource_path(conn, :new, context, resource)
-              )
+      true ->
+        case Kaffy.ResourceCallbacks.create_callbacks(conn, my_resource, changes) do
+          {:ok, entry} ->
+            case Map.get(params, "submit", "Save") do
+              "Save" ->
+                put_flash(conn, :success, "Created a new #{resource_name} successfully")
+                |> redirect(
+                  to: Kaffy.Utils.router().kaffy_resource_path(conn, :index, context, resource)
+                )
 
-            "Save and continue editing" ->
-              put_flash(conn, :success, "Created a new #{resource_name} successfully")
-              |> redirect_to_resource(context, resource, entry)
-          end
+              "Save and add another" ->
+                conn
+                |> put_flash(:success, "#{resource_name} saved successfully")
+                |> redirect(
+                  to: Kaffy.Utils.router().kaffy_resource_path(conn, :new, context, resource)
+                )
 
-        {:error, %Ecto.Changeset{} = changeset} ->
-          render(conn, "new.html",
-            layout: {KaffyWeb.LayoutView, "app.html"},
-            changeset: changeset,
-            context: context,
-            resource: resource,
-            resource_name: resource_name,
-            my_resource: my_resource
-          )
+              "Save and continue editing" ->
+                put_flash(conn, :success, "Created a new #{resource_name} successfully")
+                |> redirect_to_resource(context, resource, entry)
+            end
 
-        {:error, {entry, error}} when is_binary(error) ->
-          changeset = Ecto.Changeset.change(entry)
+          {:error, %Ecto.Changeset{} = changeset} ->
+            render(conn, "new.html",
+              layout: {KaffyWeb.LayoutView, "app.html"},
+              changeset: changeset,
+              context: context,
+              resource: resource,
+              resource_name: resource_name,
+              my_resource: my_resource
+            )
 
-          conn
-          |> put_flash(:error, error)
-          |> render("new.html",
-            layout: {KaffyWeb.LayoutView, "app.html"},
-            changeset: changeset,
-            context: context,
-            resource: resource,
-            resource_name: resource_name,
-            my_resource: my_resource
-          )
-      end
-    else
-      {:permitted, false} -> unauthorized_access(conn)
-      {:enabled, false} -> not_enabled(conn)
+          {:error, {entry, error}} when is_binary(error) ->
+            changeset = Ecto.Changeset.change(entry)
+
+            conn
+            |> put_flash(:error, error)
+            |> render("new.html",
+              layout: {KaffyWeb.LayoutView, "app.html"},
+              changeset: changeset,
+              context: context,
+              resource: resource,
+              resource_name: resource_name,
+              my_resource: my_resource
+            )
+        end
     end
   end
 
@@ -374,19 +374,9 @@ defmodule KaffyWeb.ResourceController do
     Kaffy.ResourceAdmin.authorized?(resource, conn)
   end
 
-  defp is_enabled?(resource, action) do
-    action in Kaffy.ResourceAdmin.default_actions(resource)
-  end
-
   defp unauthorized_access(conn) do
     conn
     |> put_flash(:error, "You are not authorized to access that page")
-    |> redirect(to: Kaffy.Utils.router().kaffy_home_path(conn, :index))
-  end
-
-  defp not_enabled(conn) do
-    conn
-    |> put_flash(:error, "This action has been disabled.")
     |> redirect(to: Kaffy.Utils.router().kaffy_home_path(conn, :index))
   end
 

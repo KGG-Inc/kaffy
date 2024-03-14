@@ -35,7 +35,9 @@ defmodule Kaffy.ResourceForm do
     end
   end
 
-  def form_field(changeset, form, {field, options}, opts \\ []) do
+  def form_field(changeset, form, field, opts \\ [])
+
+  def form_field(changeset, form, {field, options}, opts) do
     options = options || %{}
 
     type =
@@ -59,7 +61,7 @@ defmodule Kaffy.ResourceForm do
 
     cond do
       !is_nil(choices) ->
-        select(form, field, choices, class: "custom-select", disabled: permission == :readonly)
+        select(form, field, choices, class: "custom-select")
 
       true ->
         build_html_input(
@@ -85,7 +87,7 @@ defmodule Kaffy.ResourceForm do
     schema = schema.__struct__
 
     case type do
-      {:embed, %{cardinality: :one}} ->
+      {:embed, _} ->
         embed = Kaffy.ResourceSchema.embed_struct(schema, field)
         embed_fields = Kaffy.ResourceSchema.fields(embed)
         embed_changeset = Ecto.Changeset.change(Map.get(data, field) || embed.__struct__)
@@ -93,12 +95,12 @@ defmodule Kaffy.ResourceForm do
         inputs_for(form, field, fn fp ->
           [
             {:safe, ~s(<div class="card ml-3" style="padding:15px;">)},
-            Enum.reduce(embed_fields, [], fn {f, embed_options}, all ->
+            Enum.reduce(embed_fields, [], fn f, all ->
               content_tag :div, class: "form-group" do
                 [
                   [
                     form_label(fp, f),
-                    form_field(embed_changeset, fp, {f, embed_options}, class: "form-control")
+                    form_field(embed_changeset, fp, {f, options}, class: "form-control")
                   ]
                   | all
                 ]
@@ -107,14 +109,6 @@ defmodule Kaffy.ResourceForm do
             {:safe, "</div>"}
           ]
         end)
-
-      {:embed, _} ->
-        value =
-          data
-          |> Map.get(field, "")
-          |> Kaffy.Utils.json().encode!(escape: :html_safe, pretty: true)
-
-        textarea(form, field, [value: value, rows: 4, placeholder: "JSON Content"] ++ opts)
 
       :id ->
         case Kaffy.ResourceSchema.primary_key(schema) == [field] do
@@ -132,7 +126,7 @@ defmodule Kaffy.ResourceForm do
         text_input(form, field, opts)
 
       :richtext ->
-        opts = add_class(opts, "kaffy-editor")
+        opts = Keyword.put(opts, :class, "kaffy-editor")
         textarea(form, field, opts)
 
       :textarea ->
@@ -148,8 +142,8 @@ defmodule Kaffy.ResourceForm do
         text_input(form, field, opts)
 
       t when t in [:boolean, :boolean_checkbox] ->
-        checkbox_opts = add_class(opts, "custom-control-input")
-        label_opts = add_class(opts, "custom-control-label")
+        checkbox_opts = Keyword.put(opts, :class, "custom-control-input")
+        label_opts = Keyword.put(opts, :class, "custom-control-label")
 
         [
           {:safe, ~s(<div class="custom-control custom-checkbox">)},
@@ -159,8 +153,8 @@ defmodule Kaffy.ResourceForm do
         ]
 
       :boolean_switch ->
-        checkbox_opts = add_class(opts, "custom-control-input")
-        label_opts = add_class(opts, "custom-control-label")
+        checkbox_opts = Keyword.put(opts, :class, "custom-control-input")
+        label_opts = Keyword.put(opts, :class, "custom-control-label")
 
         [
           {:safe, ~s(<div class="custom-control custom-switch">)},
@@ -184,55 +178,13 @@ defmodule Kaffy.ResourceForm do
         values = Enum.map(values, &to_string/1)
         value = Map.get(data, field, nil)
 
-        # NOTE enum_options preserves the order of enum defined in the schema
-        enum_options =
-          Enum.map(values, fn v ->
-            capitalized = String.capitalize(v)
-            {capitalized, v}
-          end)
-
-        select(form, field, enum_options, [class: "custom-select", value: value] ++ opts)
-
-      {:parameterized, Ecto.Enum, %{mappings: mappings, on_cast: on_cast}} ->
-        value = Map.get(data, field, nil)
-
-        # NOTE enum_options preserves the order of enum defined in the schema
-        enum_options =
-          Enum.map(mappings, fn {k, _} ->
-            k = to_string(k)
-            v = Map.get(on_cast, k)
-            k = String.capitalize(k)
-            {k, v}
-          end)
-
-        select(form, field, enum_options, [class: "custom-select", value: value] ++ opts)
+        select(form, field, values, [value: value] ++ opts)
 
       {:array, {:parameterized, Ecto.Enum, %{values: values}}} ->
         values = Enum.map(values, &to_string/1)
         value = Map.get(data, field, nil)
 
-        # NOTE enum_options preserves the order of enum defined in the schema
-        enum_options =
-          Enum.map(values, fn v ->
-            capitalized = String.capitalize(v)
-            {capitalized, v}
-          end)
-
-        multiple_select(form, field, enum_options, [value: value] ++ opts)
-
-      {:array, {:parameterized, Ecto.Enum, %{mappings: mappings, on_cast: on_cast}}} ->
-        value = Map.get(data, field, nil)
-
-        # NOTE enum_options preserves the order of enum defined in the schema
-        enum_options =
-          Enum.map(mappings, fn {k, _} ->
-            k = to_string(k)
-            v = Map.get(on_cast, k)
-            k = String.capitalize(k)
-            {k, v}
-          end)
-
-        multiple_select(form, field, enum_options, [value: value] ++ opts)
+        multiple_select(form, field, values, [value: value] ++ opts)
 
       {:array, _} ->
         case !is_nil(options[:values_fn]) && is_function(options[:values_fn], 2) do
@@ -254,7 +206,7 @@ defmodule Kaffy.ResourceForm do
         file_input(form, field, opts)
 
       :select ->
-        select(form, field, [class: "custom-select"] ++ opts)
+        select(form, field, opts)
 
       :date ->
         flatpickr_date(form, field, opts)
@@ -296,8 +248,8 @@ defmodule Kaffy.ResourceForm do
   end
 
   defp flatpickr_generic(form, field, opts, placeholder, fp_class, icon \\ "📅") do
-    opts = add_class(opts, "flatpickr-input")
-    opts = add_class(opts, "form-control")
+    opts = Keyword.put(opts, :class, "flatpickr-input")
+    opts = Keyword.put(opts, :class, "form-control")
     opts = Keyword.put(opts, :id, "inlineFormInputGroup")
     opts = Keyword.put(opts, :placeholder, placeholder)
     opts = Keyword.put(opts, :"data-input", "")
@@ -493,9 +445,5 @@ defmodule Kaffy.ResourceForm do
           [label_tag, field_tag, field_feeback]
         end
     end
-  end
-
-  defp add_class(opts, class) do
-    Keyword.update(opts, :class, class, &"#{&1} #{class}")
   end
 end

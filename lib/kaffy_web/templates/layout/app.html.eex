@@ -65,7 +65,7 @@
               <li class="nav-item">
                 <%= link to: custom_link.url, method: custom_link.method, class: "nav-link", target: custom_link.target do %>
                   <span class="menu-title"><%= custom_link.name %></span>
-                  <i class="<%= if custom_link.full_icon do %><%= custom_link.full_icon %><% else %>fas fa-<%= custom_link.icon %><% end %> menu-icon"></i>
+                  <i class="fas fa-<%= custom_link.icon %> menu-icon"></i>
                 <% end %>
               </li>
             <% end %>
@@ -100,7 +100,7 @@
                     <div class="collapse<%= if @conn.assigns[:context] == to_string(context) do %> show<% end %>" id="<%= context %>-context">
                       <ul class="nav flex-column sub-menu">
                         <%= for {resource, options} <- Kaffy.Utils.schemas_for_context(@conn, context) do %>
-                            <%= if Kaffy.ResourceAdmin.authorized?(options, @conn) && Kaffy.Utils.visible?(options) do %>
+                            <%= if Kaffy.ResourceAdmin.authorized?(options, @conn) do %>
                                 <li class="nav-item"><%= link Kaffy.ResourceAdmin.plural_name(options), to: Kaffy.Utils.router().kaffy_resource_path(@conn, :index, context, resource), class: "nav-link" %></li>
                                 <%= for custom_link <- Kaffy.ResourceAdmin.custom_links(options, :sub) do %>
                                     <li class="nav-item"><%= link custom_link.name, to: custom_link.url, class: "nav-link", target: custom_link.target %></li>
@@ -110,15 +110,6 @@
                       </ul>
                     </div>
                 </li>
-            <% end %>
-
-            <%= for custom_link <- Kaffy.ResourceAdmin.collect_links(@conn, :bottom) do %>
-              <li class="nav-item">
-                <%= link to: custom_link.url, method: custom_link.method, class: "nav-link", target: custom_link.target do %>
-                  <span class="menu-title"><%= custom_link.name %></span>
-                  <i class="fas fa-<%= custom_link.icon %> menu-icon"></i>
-                <% end %>
-              </li>
             <% end %>
           </ul>
         </nav>
@@ -155,7 +146,7 @@
 
           <footer class="footer">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-              <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022 Kaffy. All rights reserved.</span>
+              <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2020 Kaffy. All rights reserved.</span>
             </div>
           </footer>
 
