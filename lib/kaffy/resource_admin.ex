@@ -23,7 +23,7 @@ defmodule Kaffy.ResourceAdmin do
 
   If index/1 is not defined, Kaffy will return all the fields of the schema and their default values.
 
-  ## Examples
+  Example:
 
   ```elixir
   def index(_schema) do
@@ -73,7 +73,7 @@ defmodule Kaffy.ResourceAdmin do
   If form_fields/1 is not defined, Kaffy will return all the fields with
   their default types based on the schema.
 
-  ## Examples
+  Example:
 
   ```elixir
   def form_fields(_schema) do
@@ -124,7 +124,7 @@ defmodule Kaffy.ResourceAdmin do
 
   If `search_fields/1` is not defined, Kaffy will return all the `:string` fields of the schema.
 
-  ## Examples
+  Example:
 
   ```elixir
   def search_fields(_schema) do
@@ -145,7 +145,7 @@ defmodule Kaffy.ResourceAdmin do
 
   If `ordering/1` is not defined, Kaffy will return `[desc: :id]`.
 
-  ## Examples
+  Example:
 
   ```elixir
   def ordering(_schema) do
@@ -158,23 +158,6 @@ defmodule Kaffy.ResourceAdmin do
   end
 
   @doc """
-  `default_actions/1` takes a schema and returns the default actions for the schema.
-
-  If `default_actions/1` is not defined, Kaffy will return `[:new, :edit, :delete]`.
-
-  Example:
-
-  ```elixir
-  def default_actions(_schema) do
-    [:new, :delete]
-  end
-  ```
-  """
-  def default_actions(resource) do
-    Utils.get_assigned_value_or_default(resource, :default_actions, [:new, :edit, :delete])
-  end
-
-  @doc """
   `authorized?/2` takes the schema and the current Plug.Conn struct and
   should return a boolean value.
 
@@ -182,7 +165,7 @@ defmodule Kaffy.ResourceAdmin do
 
   If `authorized?/2` is not defined, Kaffy will return true.
 
-  ## Examples
+  Example:
 
   ```elixir
   def authorized?(_schema, _conn) do
@@ -201,7 +184,7 @@ defmodule Kaffy.ResourceAdmin do
 
   and if that's not defined, `Ecto.Changeset.change/2` will be called.
 
-  ## Examples
+  Example:
 
   ```elixir
   def create_changeset(schema, attrs) do
@@ -240,7 +223,7 @@ defmodule Kaffy.ResourceAdmin do
 
   and if that's not defined, `Ecto.Changeset.change/2` will be called.
 
-  ## Examples
+  Example:
 
   ```elixir
   def update_changeset(schema, attrs) do
@@ -281,7 +264,7 @@ defmodule Kaffy.ResourceAdmin do
 
   If you have "Post" and you want to display "Article" for example.
 
-  ## Examples
+  Example:
 
   ```elixir
   def singular_name(_schema) do
@@ -313,7 +296,7 @@ defmodule Kaffy.ResourceAdmin do
   If `plural_name/1` is not defined, Kaffy will use the singular
   name and add an "s" to it (e.g. Posts).
 
-  ## Examples
+  Example:
 
   ```elixir
   def plural_name(_schema) do
@@ -322,7 +305,7 @@ defmodule Kaffy.ResourceAdmin do
   ```
   """
   def plural_name(resource) do
-    default = singular_name(resource) |> Kaffy.Inflector.pluralize()
+    default = singular_name(resource) <> "s"
     Utils.get_assigned_value_or_default(resource, :plural_name, default)
   end
 

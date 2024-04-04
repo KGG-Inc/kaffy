@@ -161,6 +161,7 @@ defmodule Kaffy.ResourceSchema do
   end
 
   def kaffy_field_value(conn, schema, {field, options}) do
+    default_value = kaffy_field_value(schema, field)
     ft = Kaffy.ResourceSchema.field_type(schema.__struct__, field)
     value = Map.get(options || %{}, :value)
 
@@ -187,7 +188,7 @@ defmodule Kaffy.ResourceSchema do
         value
 
       true ->
-        kaffy_field_value(schema, field)
+        default_value
     end
   end
 
@@ -308,6 +309,9 @@ defmodule Kaffy.ResourceSchema do
     get_all_fields(schema)
     |> Enum.filter(fn
       {_f, %{type: :map}} ->
+        true
+
+      {_f, %{type: {:array, _}}} ->
         true
 
       f when is_atom(f) ->

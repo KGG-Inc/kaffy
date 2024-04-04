@@ -22,13 +22,10 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 kaffy-*.tar
 
-# Temporary files, for example, from tests.
-/tmp/
-
-# Ignore local node_modules.
+# Ignore local node_modules
 /node_modules/
 
-# Misc.
+.elixir_ls
 .DS_Store
 .tool-versions
 
