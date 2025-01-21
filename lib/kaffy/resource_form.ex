@@ -1,5 +1,7 @@
 defmodule Kaffy.ResourceForm do
-  use Phoenix.HTML
+  import Phoenix.HTML
+  import Phoenix.HTML.Form
+  use PhoenixHTMLHelpers
 
   import Ecto.Query, only: [from: 2]
 

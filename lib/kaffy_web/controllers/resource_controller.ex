@@ -2,7 +2,9 @@ defmodule KaffyWeb.ResourceController do
   @moduledoc false
 
   use Phoenix.Controller, namespace: KaffyWeb
-  use Phoenix.HTML
+  import Phoenix.HTML
+  import Phoenix.HTML.Form
+  use PhoenixHTMLHelpers
   alias Kaffy.Pagination
 
   def index(

@@ -6,5 +6,7 @@ defmodule KaffyWeb.LayoutView do
     namespace: KaffyWeb
 
   import Phoenix.Controller, only: [get_flash: 2]
-  use Phoenix.HTML
+  import Phoenix.HTML
+  import Phoenix.HTML.Form
+  use PhoenixHTMLHelpers
 end

@@ -1,5 +1,7 @@
 defmodule Kaffy.ResourceError do
-  use Phoenix.HTML
+  import Phoenix.HTML
+  import Phoenix.HTML.Form
+  use PhoenixHTMLHelpers
 
   def form_error_border_class(form, default_class) do
     if Enum.count(form.errors) > 0 do
